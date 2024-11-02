@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mapa de Buenos Aires</title>
+    <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY"></script> <!-- Reemplaza YOUR_API_KEY con tu clave de API -->
+    <style>
+        #map {
+            height: 100vh;
+            width: 100%;
+        }
+    </style>
+    <script>
+        let lugares = []; // Almacena los lugares
+
+        // Cargar los datos desde el archivo JSON
+        async function loadPlaces() {
+            const response = await fetch('lugares_buenos_aires.json'); // Asegúrate de que el archivo JSON esté en el mismo directorio
+            lugares = await response.json();
+            initMap(); // Inicializar el mapa después de cargar los datos
+        }
+
+        function initMap() {
+            // Crear un mapa centrado en Buenos Aires
+            const map = new google.maps.Map(document.getElementById("map"), {
+                zoom: 12,
+                center: { lat: -34.603722, lng: -58.381592 },
+            });
+
+            // Dibujar marcadores y flechas
+            const coordinates = lugares.map(lugar => ({
+                name: lugar.Nombre,
+                position: { lat: lugar.Latitud, lng: lugar.Longitud } // Asegúrate de que tu JSON tenga las claves correctas
+            }));
+
+            for (let i = 0; i < coordinates.length; i++) {
+                const lugar = coordinates[i];
+                const marker = new google.maps.Marker({
+                    position: lugar.position,
+                    map: map,
+                    title: lugar.name,
+                });
+
+                // Dibujar flechas entre los lugares
+                if (i < coordinates.length - 1) {
+                    const nextLugar = coordinates[i + 1];
+                    const path = [lugar.position, nextLugar.position];
+                    const arrow = new google.maps.Polyline({
+                        path: path,
+                        geodesic: true,
+                        strokeColor: "#FF0000",
+                        strokeOpacity: 1.0,
+                        strokeWeight: 2,
+                    });
+                    arrow.setMap(map);
+                    
+                    // Añadir flecha en la mitad
+                    const midPoint = {
+                        lat: (lugar.position.lat + nextLugar.position.lat) / 2,
+                        lng: (lugar.position.lng + nextLugar.position.lng) / 2,
+                    };
+                    const arrowMarker = new google.maps.Marker({
+                        position: midPoint,
+                        map: map,
+                        icon: {
+                            url: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cf/Arrow_right.svg/1200px-Arrow_right.svg.png", // URL de la imagen de flecha
+                            scaledSize: new google.maps.Size(30, 30),
+                        },
+                    });
+                }
+            }
+        }
+
+        window.onload = loadPlaces; // Cargar los lugares cuando la ventana esté lista
+    </script>
+</head>
+<body>
+    <div id="map"></div>
+</body>
+</html>
